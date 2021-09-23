@@ -3,7 +3,6 @@ package my.sebaa.chess;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 
@@ -19,7 +18,6 @@ public class MainClass extends Application {
     }
 
     public void extracted() throws IOException {
-        //AnchorPane fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/FirstView.fxml")).load();
         GridPane fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/BoardGame.fxml")).load();
         Scene scene = new Scene(fxmlLoader);
         stage.setTitle("Chess by Sebaa");
