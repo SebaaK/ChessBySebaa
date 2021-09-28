@@ -6,12 +6,20 @@ public class IAMove {
     private BoardField prevMove;
     private BoardField nextMove;
 
-    public BoardField getPrevMove() {
-        return prevMove;
+    public int getPrevX() {
+        return prevMove.getX();
     }
 
-    public BoardField getNextMove() {
-        return nextMove;
+    public int getPrevY() {
+        return prevMove.getY();
+    }
+
+    public int getNextX() {
+        return nextMove.getX();
+    }
+
+    public int getNextY() {
+        return nextMove.getY();
     }
 
     public void setPrevMove(BoardField prevMove) {

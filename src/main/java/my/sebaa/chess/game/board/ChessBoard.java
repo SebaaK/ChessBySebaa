@@ -39,6 +39,14 @@ public class ChessBoard {
         return false;
     }
 
+    public boolean moveFigureIA(int row, int col, int moveToX, int moveToY) {
+        Figure figure = getFigureFromPoint(row, col);
+        setFigureOnField(moveToX, moveToY, figure);
+        fields[row][col].setFigure(null);
+        currentTurn++;
+        return true;
+    }
+
     public boolean[][] getPossibilityMoves(int row, int col) {
         Figure figure = getFigureFromPoint(row, col);
         if(figure != null)
@@ -241,5 +249,21 @@ public class ChessBoard {
         }
 
         return legalMoves;
+    }
+
+    public void setCurrentTurn(int turn) {
+        currentTurn = turn;
+    }
+    public BoardField[][] getFields() {
+        return fields;
+    }
+
+    public void setFieldFromOutsiteConfiguration(BoardField[][] field) {
+        for(int row = 0; row < 8; row++) {
+            for(int col = 0; col < 8; col++) {
+                fields[row][col] = new BoardField(this, row, col);
+                fields[row][col].setFigure(field[row][col].getFigure());
+            }
+        }
     }
 }

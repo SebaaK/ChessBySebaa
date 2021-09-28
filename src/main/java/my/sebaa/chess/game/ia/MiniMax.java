@@ -4,102 +4,98 @@ import my.sebaa.chess.game.board.BoardField;
 import my.sebaa.chess.game.board.ChessBoard;
 import my.sebaa.chess.game.figure.Color;
 
-import java.util.ArrayList;
-
 public class MiniMax {
 
-    public static IAMove execute(final ChessBoard board, int depth) {
+    private final BoardField[][] boardFields;
+    private ChessBoard chessBoard = new ChessBoard();
+    private int depth;
+
+    public MiniMax(final BoardField[][] chessBoard, int depth) {
+        boardFields = chessBoard;
+        this.depth = depth;
+
+        this.chessBoard.setCurrentTurn(1);
+    }
+
+    public IAMove execute() {
         IAMove bestMove = new IAMove();
         int lowValue = Integer.MIN_VALUE;
 
-        for(final BoardField loopField : board.getAllFiguresThisTurn()) {
+        chessBoard.setFieldFromOutsiteConfiguration(boardFields);
+        for(BoardField loopField : chessBoard.getAllFiguresThisTurn()) {
             boolean[][] legalMovesLoopFigure = loopField.possibilityMovesFigure();
             for(int rowMove = 0; rowMove < 8; rowMove++) {
                 for(int colMove = 0; colMove < 8; colMove++) {
                     if(legalMovesLoopFigure[rowMove][colMove]) {
-                        BoardField temporaryField = loopField;
-                        board.moveFigure(loopField.getX(), loopField.getY(), rowMove, colMove);
-                        int currentValueMove = max(board, depth);
+                        chessBoard.setCurrentTurn(1);
+                        chessBoard.moveFigure(loopField.getX(), loopField.getY(), rowMove, colMove);
+                        int currentValueMove = minimax(chessBoard, depth, true);
 
                         if(currentValueMove >= lowValue) {
                             lowValue = currentValueMove;
-                            BoardField boardField = board.getFieldFromPoint(rowMove, colMove);
-                            bestMove.setPrevMove(temporaryField);
+                            BoardField boardField = chessBoard.getFieldFromPoint(rowMove, colMove);
+                            bestMove.setPrevMove(loopField);
                             bestMove.setNextMove(boardField);
+                        }
+
+                    }
+                    chessBoard.setFieldFromOutsiteConfiguration(boardFields);
+                }
+            }
+        }
+        return bestMove;
+    }
+
+    private static int minimax(ChessBoard board, int depth, boolean isMax) {
+        if(depth == 0 || isCheck(board))
+            return CountScore.evaluate(board, depth);
+
+        int bestValue = Integer.MIN_VALUE;
+        if(isMax) {
+            for(BoardField loopField : board.getAllFiguresThisTurn()) {
+                boolean[][] legalMovesField = loopField.possibilityMovesFigure();
+
+                for(int rowMove = 0; rowMove < 8; rowMove++) {
+                    for(int colMove = 0; colMove < 8; colMove++) {
+                        if(legalMovesField[rowMove][colMove]) {
+                            ChessBoard chessBoardLoop = new ChessBoard();
+                            chessBoardLoop.setFieldFromOutsiteConfiguration(board.getFields());
+                            board.moveFigure(loopField.getX(), loopField.getY(), rowMove, colMove);
+
+                            int value = minimax(board, depth-1, false);
+                            bestValue = Math.max(value, bestValue);
+
+                            board.setFieldFromOutsiteConfiguration(chessBoardLoop.getFields());
+                        }
+                    }
+                }
+            }
+        } else {
+            bestValue = Integer.MAX_VALUE;
+            for(BoardField loopField : board.getAllFiguresThisTurn()) {
+                boolean[][] legalMovesField = loopField.possibilityMovesFigure();
+
+                for(int rowMove = 0; rowMove < 8; rowMove++) {
+                    for(int colMove = 0; colMove < 8; colMove++) {
+                        if(legalMovesField[rowMove][colMove]) {
+                            ChessBoard chessBoardLoop = new ChessBoard();
+                            chessBoardLoop.setFieldFromOutsiteConfiguration(board.getFields());
+
+                            board.moveFigure(loopField.getX(), loopField.getY(), rowMove, colMove);
+
+                            int value = minimax(board, depth-1, true);
+                            bestValue = Math.min(value, bestValue);
+
+                            board.setFieldFromOutsiteConfiguration(chessBoardLoop.getFields());
                         }
                     }
                 }
             }
         }
-
-        System.out.println(bestMove.getPrevMove().getX());
-        System.out.println(bestMove.getPrevMove().getY());
-
-        System.out.println(bestMove.getNextMove().getX());
-        System.out.println(bestMove.getNextMove().getY());
-
-        return bestMove;
+        return bestValue;
     }
 
-    private static int max(ChessBoard board, int depth) {
-        if(depth == 0 || board.testCheck(Color.WHITE))
-            return CountScore.evaluate(board, depth);
-
-        int lowValue = Integer.MIN_VALUE;
-        for(final BoardField loopField : board.getAllFiguresThisTurn()) {
-            boolean[][] legalMovesField = loopField.possibilityMovesFigure();
-            for(int rowMove = 0; rowMove < 8; rowMove++) {
-                for(int colMove = 0; colMove < 8; colMove++) {
-                    if(legalMovesField[rowMove][colMove]) {
-                        board.moveFigure(loopField.getX(), loopField.getY(), rowMove, colMove);
-                        final int score = min(board, depth - 1);
-                        if(score > lowValue)
-                            lowValue = score;
-                    }
-                }
-            }
-        }
-
-        return lowValue;
-    }
-
-    private static int min(ChessBoard board, int depth) {
-        if(depth == 0 || board.testCheck(Color.WHITE))
-            return CountScore.evaluate(board, depth);
-
-        int highValue = Integer.MIN_VALUE;
-        for(final BoardField loopField : board.getAllFiguresThisTurn()) {
-            boolean[][] legalMovesField = loopField.possibilityMovesFigure();
-
-            if(legalMovesField == null) {
-                ArrayList<BoardField> fieldsX = new ArrayList<>(board.getAllFiguresThisTurn());
-
-                board.getAllFiguresThisTurn().stream()
-                        .map(t -> {
-                            String name = t.getFigure().getName();
-                            Color color = t.getFigure().getColor();
-
-                            return name + " " + color;
-                        })
-                        .forEach(System.out::println);
-            }
-
-            for(int rowMove = 0; rowMove < 8; rowMove++) {
-                for(int colMove = 0; colMove < 8; colMove++) {
-                    if(legalMovesField[rowMove][colMove]) {
-                        board.moveFigure(loopField.getX(), loopField.getY(), rowMove, colMove);
-                        final int score = max(board, depth - 1);
-                        if(score < highValue)
-                            highValue = score;
-                    }
-                }
-            }
-        }
-
-        return highValue;
-    }
-
-    private boolean isCheckAnyColor(ChessBoard board) {
-        return board.testCheckMate(Color.WHITE) || board.testCheckMate(Color.BLACK);
+    private static boolean isCheck(ChessBoard board) {
+        return board.testCheckMate(Color.WHITE) || board.testCheckMate(Color.BLACK) || board.testCheck(Color.WHITE) || board.testCheck(Color.BLACK);
     }
 }

@@ -1,11 +1,15 @@
 package my.sebaa.chess.controllers;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.DragEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
+import javafx.stage.Stage;
 import my.sebaa.chess.game.board.BoardField;
 import my.sebaa.chess.game.board.ChessBoard;
 import my.sebaa.chess.game.figure.Color;
@@ -31,16 +35,17 @@ public class BoardGameController {
         drawBoard();
     }
 
+    private void showInformation(String msg) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setHeaderText("Chess by Sebaa");
+        alert.setContentText(msg);
+
+        alert.initOwner(Stage.getWindows().get(0));
+        alert.showAndWait();
+    }
+
     private void drawBoard() {
         chessGame.getChildren().clear();
-
-        if(chessBoard.getTurn() == Color.BLACK) {
-            IAMove iaMove = MiniMax.execute(chessBoard, 0);
-            int prevX = iaMove.getPrevMove().getX();
-            int prevY = iaMove.getPrevMove().getY();
-            chessBoard.moveFigure(prevX, prevY, iaMove.getNextMove().getX(), iaMove.getNextMove().getY());
-        }
-
         for(int row = 0; row < 8; row++) {
             for(int col = 0; col < 8; col++) {
                 Label label = new Label();
@@ -57,6 +62,13 @@ public class BoardGameController {
                 label.setPrefSize(SIZE, SIZE);
                 chessGame.add(label, col, row);
             }
+        }
+
+        if(chessBoard.getTurn() == Color.BLACK) {
+            MiniMax miniMax = new MiniMax(chessBoard.getFields(), 2);
+            IAMove iaMove = miniMax.execute();
+            chessBoard.moveFigure(iaMove.getPrevX(), iaMove.getPrevY(), iaMove.getNextX(), iaMove.getNextY());
+            drawBoard();
         }
     }
 
@@ -78,11 +90,25 @@ public class BoardGameController {
             }
             selectField = null;
             drawBoard();
+            checkingCheck();
         } else if(figureMove != null) {
             if(chessBoard.getFigureFromPoint(rowIndex, colIndex).getColor() == Color.WHITE && chessBoard.getTurn() == Color.WHITE) {
                 drawPossibilityMoves(figureMove);
                 selectField = chessBoard.getFieldFromPoint(rowIndex, colIndex);
             }
+        }
+    }
+
+    private void checkingCheck() {
+        //TODO: Optimalizacja!
+        if(chessBoard.testCheckMate(Color.WHITE) || chessBoard.testCheckMate(Color.BLACK)) {
+            String color = chessBoard.testCheckMate(Color.WHITE) ? "BIAŁEGO" : "CZARNEGO";
+            showInformation("Szach mat dla koloru " + color);
+            Platform.exit();
+            System.exit(0);
+        } else if(chessBoard.testCheck(Color.WHITE) || chessBoard.testCheck(Color.BLACK)) {
+            String color = chessBoard.testCheck(Color.WHITE) ? "BIAŁEGO" : "CZARNEGO";
+            showInformation("Szach dla koloru " + color);
         }
     }
 
